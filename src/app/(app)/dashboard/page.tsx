@@ -4,6 +4,17 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { JourneyMap, type JourneyModule } from "@/components/app/journey-map";
+import { VideoPlaylist } from "@/components/marketing/video-playlist";
+
+const DASHBOARD_CLIPS = [
+  "/videos/hero.mp4",
+  "/videos/frontend-kingdom.mp4",
+  "/videos/backend-factory.mp4",
+  "/videos/cyber-security-hq.mp4",
+  "/videos/data-science-lab.mp4",
+  "/videos/cloud-mountains.mp4",
+  "/videos/marketing-city.mp4",
+];
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -48,25 +59,31 @@ export default async function DashboardPage() {
   const attemptedQuizSet = new Set(quizAttempts.map((a) => a.quizId));
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-16">
-      <h1 className="text-3xl font-bold tracking-tight">My courses</h1>
-      <p className="mt-2 text-[var(--muted)]">Pick up right where you left off.</p>
+    <main>
+      <section className="relative overflow-hidden px-6 pb-10 pt-16">
+        <VideoPlaylist sources={DASHBOARD_CLIPS} />
+        <div className="relative z-10 mx-auto max-w-5xl">
+          <h1 className="text-3xl font-bold tracking-tight">My courses</h1>
+          <p className="mt-2 text-[var(--muted)]">Pick up right where you left off.</p>
+        </div>
+      </section>
 
-      {enrollments.length === 0 ? (
-        <Card className="mt-10 p-2">
-          <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-            <CardTitle>No courses yet</CardTitle>
-            <CardDescription>You haven&apos;t enrolled in anything yet — go pick a world.</CardDescription>
-            <Link
-              href="/"
-              className="inline-flex h-10 items-center justify-center rounded-xl gradient-bg px-4 text-sm font-medium text-[var(--primary-foreground)]"
-            >
-              Explore worlds
-            </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="mt-10 flex flex-col gap-6">
+      <div className="mx-auto max-w-5xl px-6 pb-16">
+        {enrollments.length === 0 ? (
+          <Card className="mt-10 p-2">
+            <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
+              <CardTitle>No courses yet</CardTitle>
+              <CardDescription>You haven&apos;t enrolled in anything yet — go pick a world.</CardDescription>
+              <Link
+                href="/"
+                className="inline-flex h-10 items-center justify-center rounded-xl gradient-bg px-4 text-sm font-medium text-[var(--primary-foreground)]"
+              >
+                Explore worlds
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="mt-10 flex flex-col gap-6">
           {enrollments.map((enrollment) => {
             const allLessons = enrollment.course.modules.flatMap((m) => m.lessons);
             const completedCount = allLessons.filter((l) => completedSet.has(l.id)).length;
@@ -129,8 +146,9 @@ export default async function DashboardPage() {
               </Card>
             );
           })}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </main>
   );
 }
