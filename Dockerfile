@@ -2,10 +2,8 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# better-sqlite3 is a native module; these let npm fall back to compiling
-# from source if a prebuilt binary isn't available for the build platform.
 # openssl is required by the Prisma engines.
-RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ openssl \
+RUN apt-get update && apt-get install -y --no-install-recommends openssl \
     && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
