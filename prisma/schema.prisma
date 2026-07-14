@@ -1,0 +1,140 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  passwordHash  String
+  role          Role     @default(STUDENT)
+  enrollments   Enrollment[]
+  progress      LessonProgress[]
+  quizAttempts  QuizAttempt[]
+  createdAt     DateTime @default(now())
+}
+
+model World {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  tagline     String
+  description String
+  colorTheme  String
+  order       Int      @default(0)
+  courses     Course[]
+}
+
+model Course {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  title       String
+  description String
+  heroImage   String?
+  price       Decimal? @default(0)
+  published   Boolean  @default(true)
+  order       Int      @default(0)
+  worldId     String
+  world       World    @relation(fields: [worldId], references: [id])
+  modules     Module[]
+  enrollments Enrollment[]
+}
+
+model Module {
+  id       String   @id @default(cuid())
+  title    String
+  order    Int      @default(0)
+  courseId String
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+  quiz     Quiz?
+}
+
+model Lesson {
+  id               String   @id @default(cuid())
+  slug             String
+  title            String
+  content          String
+  estimatedMinutes Int      @default(5)
+  order            Int      @default(0)
+  moduleId         String
+  module           Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress         LessonProgress[]
+
+  @@unique([moduleId, slug])
+}
+
+model Enrollment {
+  id         String   @id @default(cuid())
+  userId     String
+  courseId   String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+
+  @@unique([userId, lessonId])
+}
+
+// One quiz per module (checkpoint at the end of that module). Only modules
+// that close out a difficulty tier (basics/intermediate/advanced) have one.
+model Quiz {
+  id        String        @id @default(cuid())
+  moduleId  String        @unique
+  module    Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title     String
+  questions Question[]
+  attempts  QuizAttempt[]
+}
+
+model Question {
+  id            String @id @default(cuid())
+  quizId        String
+  quiz          Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  order         Int    @default(0)
+  text          String
+  optionA       String
+  optionB       String
+  optionC       String
+  optionD       String
+  correctOption String // "A" | "B" | "C" | "D"
+}
+
+// answers stores a JSON-encoded per-question breakdown (questionId, selected,
+// correct) so the results page can show which questions were missed, not
+// just the aggregate score.
+model QuizAttempt {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quizId      String
+  quiz        Quiz     @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  score       Int
+  total       Int
+  passed      Boolean
+  answers     String
+  completedAt DateTime @default(now())
+
+  @@unique([userId, quizId])
+}
