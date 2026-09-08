@@ -83,15 +83,16 @@ const courseContent: CourseContentSeed[] = [
 ];
 
 async function main() {
-  const adminPasswordHash = await bcrypt.hash("Admin123!", 10);
+  const adminPasswordHash = await bcrypt.hash("admin123", 10);
   const studentPasswordHash = await bcrypt.hash("Student123!", 10);
 
+  // Re-seeding restores the owner credentials, so update the hash rather than skipping.
   await prisma.user.upsert({
-    where: { email: "admin@courses.local" },
-    update: {},
+    where: { email: "admin123@gmail.com" },
+    update: { passwordHash: adminPasswordHash, role: "ADMIN" },
     create: {
       name: "Site Admin",
-      email: "admin@courses.local",
+      email: "admin123@gmail.com",
       passwordHash: adminPasswordHash,
       role: "ADMIN",
     },
@@ -216,7 +217,7 @@ async function main() {
   }
 
   console.log("Seed complete:");
-  console.log("  Admin login:   admin@courses.local / Admin123!");
+  console.log("  Admin login:   admin123@gmail.com / admin123");
   console.log("  Student login: student@courses.local / Student123!");
 }
 

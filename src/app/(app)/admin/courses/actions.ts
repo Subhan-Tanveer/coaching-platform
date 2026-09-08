@@ -21,6 +21,11 @@ const courseSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   worldId: z.string().min(1),
+  // Either a pasted URL or an uploaded Blob URL; blank means "no image".
+  heroImage: z
+    .string()
+    .nullish()
+    .transform((v) => v?.trim() || null),
 });
 
 export async function createCourse(formData: FormData) {
@@ -31,6 +36,7 @@ export async function createCourse(formData: FormData) {
     title: formData.get("title"),
     description: formData.get("description"),
     worldId: formData.get("worldId"),
+    heroImage: formData.get("heroImage"),
   });
 
   const maxOrder = await prisma.course.aggregate({
@@ -55,6 +61,7 @@ export async function updateCourseDetails(courseId: string, formData: FormData) 
     title: formData.get("title"),
     description: formData.get("description"),
     worldId: formData.get("worldId"),
+    heroImage: formData.get("heroImage"),
   });
   const published = formData.get("published") === "on";
 

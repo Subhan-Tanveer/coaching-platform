@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import ScrollReveal from "@/components/marketing/scroll-reveal";
+import { CourseThumb } from "@/components/marketing/course-thumb";
 import { BackgroundVideo } from "@/components/marketing/background-video";
 
 export default async function WorldPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -56,6 +57,7 @@ export default async function WorldPage({ params }: { params: Promise<{ slug: st
                   <Link href={`/courses/${course.slug}`}>
                     <Card className="h-full p-2" hover tilt>
                       <CardContent className="flex h-full flex-col gap-3">
+                        <CourseThumb src={course.heroImage} alt={course.title} />
                         <CardTitle>{course.title}</CardTitle>
                         <CardDescription className="flex-1">{course.description}</CardDescription>
                         <p className="text-xs text-[var(--muted)]">

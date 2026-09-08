@@ -7,6 +7,7 @@ import { CheckCircle2, Circle, ChevronLeft, ChevronRight, Clock, ClipboardCheck 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { cn } from "@/lib/utils";
+import { LessonVideo } from "@/components/app/lesson-video";
 import { MarkCompleteButton } from "./mark-complete-button";
 import "highlight.js/styles/github-dark.css";
 
@@ -149,6 +150,8 @@ export default async function LessonPage({
           </div>
           <MarkCompleteButton lessonId={lesson.id} initiallyCompleted={completedSet.has(lesson.id)} />
         </div>
+
+        <LessonVideo videoUrl={lesson.videoUrl} title={lesson.title} />
 
         <div className="prose prose-invert max-w-none prose-headings:tracking-tight prose-a:text-[var(--primary)] prose-code:before:content-none prose-code:after:content-none">
           <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeHighlight]}>

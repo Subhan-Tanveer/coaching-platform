@@ -56,6 +56,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             </Link>
             <h1 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">{course.title}</h1>
             <p className="mt-4 max-w-2xl text-[var(--muted)]">{course.description}</p>
+            {course.heroImage && (
+              <div className="mt-8 aspect-video max-w-2xl overflow-hidden rounded-[var(--radius)] border border-[var(--border)] bg-[var(--muted-bg)]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={course.heroImage} alt={course.title} className="size-full object-cover" />
+              </div>
+            )}
           </ScrollReveal>
         </div>
       </section>
@@ -68,6 +74,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
               {course.modules.map((mod) => (
                 <Card key={mod.id} className="p-2">
                   <CardContent>
+                    {mod.image && (
+                      <div className="-mx-2 -mt-2 mb-3 aspect-[3/1] overflow-hidden rounded-t-[var(--radius)] bg-[var(--muted-bg)]">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={mod.image} alt={mod.title} className="size-full object-cover" loading="lazy" />
+                      </div>
+                    )}
                     <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
                       {mod.title}
                     </h3>

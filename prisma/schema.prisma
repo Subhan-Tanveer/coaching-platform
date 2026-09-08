@@ -53,6 +53,7 @@ model Course {
 model Module {
   id       String   @id @default(cuid())
   title    String
+  image    String?
   order    Int      @default(0)
   courseId String
   course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -65,6 +66,7 @@ model Lesson {
   slug             String
   title            String
   content          String
+  videoUrl         String?
   estimatedMinutes Int      @default(5)
   order            Int      @default(0)
   moduleId         String

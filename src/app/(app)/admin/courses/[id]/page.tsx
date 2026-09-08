@@ -5,8 +5,17 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { MediaField } from "@/components/admin/media-field";
 import { updateCourseDetails, deleteCourse } from "../actions";
-import { createModule, deleteModule, createLesson, deleteLesson, createQuiz, deleteQuiz } from "./actions";
+import {
+  createModule,
+  deleteModule,
+  updateModule,
+  createLesson,
+  deleteLesson,
+  createQuiz,
+  deleteQuiz,
+} from "./actions";
 
 export default async function AdminCourseEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -55,6 +64,15 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
               className="sm:col-span-2"
               rows={3}
             />
+            <div className="sm:col-span-2">
+              <MediaField
+                name="heroImage"
+                kind="image"
+                label="Course image"
+                hint="Shown on the course card and at the top of the course page."
+                defaultValue={course.heroImage}
+              />
+            </div>
             <Select name="worldId" defaultValue={course.worldId} required>
               {worlds.map((world) => (
                 <option key={world.id} value={world.id}>
@@ -81,8 +99,24 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
           return (
             <Card key={mod.id} className="p-2">
               <CardContent>
-                <div className="mb-3 flex items-center justify-between">
-                  <h3 className="font-semibold">{mod.title}</h3>
+                <div className="mb-3 flex items-start justify-between gap-3">
+                  <form
+                    action={updateModule.bind(null, course.id, mod.id)}
+                    className="flex flex-1 flex-col gap-2"
+                  >
+                    <div className="flex gap-2">
+                      <Input name="title" defaultValue={mod.title} required className="max-w-xs" />
+                      <Button type="submit" size="sm" variant="secondary" className="shrink-0">
+                        Save
+                      </Button>
+                    </div>
+                    <MediaField
+                      name="image"
+                      kind="image"
+                      label="Module image"
+                      defaultValue={mod.image}
+                    />
+                  </form>
                   <form action={boundDeleteModule.bind(null, mod.id)}>
                     <button
                       type="submit"

@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import ScrollReveal from "@/components/marketing/scroll-reveal";
+import { CourseThumb } from "@/components/marketing/course-thumb";
 import { VideoPlaylist } from "@/components/marketing/video-playlist";
 
 const CATALOG_CLIPS = [
@@ -50,6 +51,7 @@ export default async function CoursesPage() {
                 <Link href={`/courses/${course.slug}`}>
                   <Card className="h-full p-2" hover tilt>
                     <CardContent className="flex h-full flex-col gap-3">
+                        <CourseThumb src={course.heroImage} alt={course.title} />
                       <Badge
                         className="w-fit"
                         style={{ background: `${course.world.colorTheme}22`, color: course.world.colorTheme }}

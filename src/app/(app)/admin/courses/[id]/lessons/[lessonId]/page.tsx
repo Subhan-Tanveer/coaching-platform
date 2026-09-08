@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { MediaField } from "@/components/admin/media-field";
 import { updateLesson } from "../../actions";
 
 export default async function AdminLessonEditPage({
@@ -42,6 +43,13 @@ export default async function AdminLessonEditPage({
               />
             </div>
             <Input name="slug" defaultValue={lesson.slug} required />
+            <MediaField
+              name="videoUrl"
+              kind="video"
+              label="Lesson video"
+              hint="Paste a YouTube or Vimeo link (free, recommended), or upload a file."
+              defaultValue={lesson.videoUrl}
+            />
             <Textarea
               name="content"
               defaultValue={lesson.content}

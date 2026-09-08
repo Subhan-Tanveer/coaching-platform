@@ -32,6 +32,28 @@ export async function deleteModule(courseId: string, moduleId: string) {
   revalidatePath(`/admin/courses/${courseId}`);
 }
 
+const moduleUpdateSchema = z.object({
+  title: z.string().min(1),
+  image: z
+    .string()
+    .nullish()
+    .transform((v) => v?.trim() || null),
+});
+
+export async function updateModule(courseId: string, moduleId: string, formData: FormData) {
+  await requireAdmin();
+
+  const parsed = moduleUpdateSchema.parse({
+    title: formData.get("title"),
+    image: formData.get("image"),
+  });
+
+  await prisma.module.update({ where: { id: moduleId }, data: parsed });
+
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath("/courses");
+}
+
 const lessonSchema = z.object({
   title: z.string().min(1),
   slug: z
@@ -79,6 +101,11 @@ const lessonUpdateSchema = z.object({
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
   estimatedMinutes: z.coerce.number().int().min(1).max(300),
   content: z.string().min(1),
+  // YouTube/Vimeo link or an uploaded file URL; blank means "no video".
+  videoUrl: z
+    .string()
+    .nullish()
+    .transform((v) => v?.trim() || null),
 });
 
 export async function updateLesson(courseId: string, lessonId: string, formData: FormData) {
@@ -89,6 +116,7 @@ export async function updateLesson(courseId: string, lessonId: string, formData:
     slug: formData.get("slug"),
     estimatedMinutes: formData.get("estimatedMinutes"),
     content: formData.get("content"),
+    videoUrl: formData.get("videoUrl"),
   });
 
   await prisma.lesson.update({ where: { id: lessonId }, data: parsed });
