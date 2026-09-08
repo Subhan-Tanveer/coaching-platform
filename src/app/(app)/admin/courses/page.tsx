@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { MediaField } from "@/components/admin/media-field";
 import { createCourse } from "./actions";
 
 export default async function AdminCoursesPage() {
@@ -53,6 +54,14 @@ export default async function AdminCoursesPage() {
               <Input name="title" placeholder="Title" required />
               <Input name="slug" placeholder="Slug (e.g. react-fundamentals)" required />
               <Textarea name="description" placeholder="Description" required className="sm:col-span-2" rows={3} />
+              <div className="sm:col-span-2">
+                <MediaField
+                  name="heroImage"
+                  kind="image"
+                  label="Course image (optional)"
+                  hint="Paste an image URL or upload one. You can also add it later."
+                />
+              </div>
               <Select name="worldId" required defaultValue="">
                 <option value="" disabled>
                   Choose a world

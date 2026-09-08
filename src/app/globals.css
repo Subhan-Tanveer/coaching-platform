@@ -72,6 +72,19 @@ body {
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
+/* A native dropdown popup paints on its own OS surface rather than over the
+   page, so the translucent --muted-bg resolves against white and the list
+   comes out light. Options need solid colours of their own. */
+select option,
+select optgroup {
+  background-color: var(--background-2);
+  color: var(--foreground);
+}
+
+select option:disabled {
+  color: var(--muted);
+}
+
 .glass {
   background: var(--card);
   backdrop-filter: blur(20px);

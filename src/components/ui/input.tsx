@@ -29,12 +29,15 @@ export const Textarea = forwardRef<HTMLTextAreaElement, React.ComponentProps<"te
 );
 Textarea.displayName = "Textarea";
 
+// Unlike Input, the background here has to be opaque: the browser reuses it for
+// the native dropdown popup, which paints on its own surface where a translucent
+// colour would resolve against white.
 export const Select = forwardRef<HTMLSelectElement, React.ComponentProps<"select">>(
   ({ className, ...props }, ref) => (
     <select
       ref={ref}
       className={cn(
-        "h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--muted-bg)] px-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-[var(--primary)]/40",
+        "h-10 w-full rounded-xl border border-[var(--border)] bg-[var(--background-2)] px-3 text-sm outline-none transition-shadow focus:ring-2 focus:ring-[var(--primary)]/40",
         className
       )}
       {...props}
