@@ -5,6 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { ActionResult } from "@/lib/action-result";
+
+function firstIssue(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Please check the fields and try again.";
+}
 
 async function requireAdmin() {
   const session = await auth();
@@ -33,32 +38,38 @@ export async function deleteModule(courseId: string, moduleId: string) {
 }
 
 const moduleUpdateSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().min(1, "Give the module a title."),
   image: z
     .string()
     .nullish()
     .transform((v) => v?.trim() || null),
 });
 
-export async function updateModule(courseId: string, moduleId: string, formData: FormData) {
+export async function updateModule(
+  courseId: string,
+  moduleId: string,
+  formData: FormData
+): Promise<ActionResult> {
   await requireAdmin();
 
-  const parsed = moduleUpdateSchema.parse({
+  const parsed = moduleUpdateSchema.safeParse({
     title: formData.get("title"),
     image: formData.get("image"),
   });
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  await prisma.module.update({ where: { id: moduleId }, data: parsed });
+  await prisma.module.update({ where: { id: moduleId }, data: parsed.data });
 
   revalidatePath(`/admin/courses/${courseId}`);
   revalidatePath("/courses");
+  return { ok: true };
 }
 
 const lessonSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().min(1, "Give the lesson a title."),
   slug: z
     .string()
-    .min(1)
+    .min(1, "Give the lesson a slug, e.g. understanding-promises.")
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
   estimatedMinutes: z.coerce.number().int().min(1).max(300),
 });
@@ -94,13 +105,17 @@ export async function deleteLesson(courseId: string, lessonId: string) {
 }
 
 const lessonUpdateSchema = z.object({
-  title: z.string().min(1),
+  title: z.string().min(1, "Give the lesson a title."),
   slug: z
     .string()
-    .min(1)
+    .min(1, "Give the lesson a slug, e.g. understanding-promises.")
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
-  estimatedMinutes: z.coerce.number().int().min(1).max(300),
-  content: z.string().min(1),
+  estimatedMinutes: z.coerce
+    .number()
+    .int()
+    .min(1, "Lesson length must be at least 1 minute.")
+    .max(300, "Lesson length must be 300 minutes or less."),
+  content: z.string().min(1, "Write something in the lesson content box."),
   // YouTube/Vimeo link or an uploaded file URL; blank means "no video".
   videoUrl: z
     .string()
@@ -108,21 +123,32 @@ const lessonUpdateSchema = z.object({
     .transform((v) => v?.trim() || null),
 });
 
-export async function updateLesson(courseId: string, lessonId: string, formData: FormData) {
+export async function updateLesson(
+  courseId: string,
+  lessonId: string,
+  formData: FormData
+): Promise<ActionResult> {
   await requireAdmin();
 
-  const parsed = lessonUpdateSchema.parse({
+  const parsed = lessonUpdateSchema.safeParse({
     title: formData.get("title"),
     slug: formData.get("slug"),
     estimatedMinutes: formData.get("estimatedMinutes"),
     content: formData.get("content"),
     videoUrl: formData.get("videoUrl"),
   });
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  await prisma.lesson.update({ where: { id: lessonId }, data: parsed });
+  try {
+    await prisma.lesson.update({ where: { id: lessonId }, data: parsed.data });
+  } catch {
+    return { ok: false, error: "Couldn't save — another lesson in this module uses that slug." };
+  }
 
   revalidatePath(`/admin/courses/${courseId}`);
   revalidatePath(`/admin/courses/${courseId}/lessons/${lessonId}`);
+  revalidatePath("/learn", "layout");
+  return { ok: true };
 }
 
 export async function createQuiz(courseId: string, moduleId: string, formData: FormData) {

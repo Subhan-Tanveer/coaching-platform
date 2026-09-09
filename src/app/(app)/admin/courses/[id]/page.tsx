@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MediaField } from "@/components/admin/media-field";
+import { SaveForm } from "@/components/admin/save-form";
 import { updateCourseDetails, deleteCourse } from "../actions";
 import {
   createModule,
@@ -54,7 +55,13 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
       <Card className="mt-8 p-2">
         <CardContent>
           <h2 className="mb-4 text-lg font-semibold">Course details</h2>
-          <form action={boundUpdateCourse} className="grid gap-3 sm:grid-cols-2">
+          <SaveForm
+            action={boundUpdateCourse}
+            className="grid gap-3 sm:grid-cols-2"
+            successMessage="Course saved"
+            rowClassName="sm:col-span-2"
+            buttonClassName="w-full"
+          >
             <Input name="title" defaultValue={course.title} required />
             <Input name="slug" defaultValue={course.slug} required />
             <Textarea
@@ -84,10 +91,7 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
               <input type="checkbox" name="published" defaultChecked={course.published} className="size-4" />
               Published
             </label>
-            <Button type="submit" className="sm:col-span-2">
-              Save changes
-            </Button>
-          </form>
+          </SaveForm>
         </CardContent>
       </Card>
 
@@ -100,23 +104,23 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
             <Card key={mod.id} className="p-2">
               <CardContent>
                 <div className="mb-3 flex items-start justify-between gap-3">
-                  <form
+                  <SaveForm
                     action={updateModule.bind(null, course.id, mod.id)}
                     className="flex flex-1 flex-col gap-2"
+                    label="Save module"
+                    successMessage="Module saved"
+                    size="sm"
+                    variant="secondary"
+                    buttonClassName="w-fit"
                   >
-                    <div className="flex gap-2">
-                      <Input name="title" defaultValue={mod.title} required className="max-w-xs" />
-                      <Button type="submit" size="sm" variant="secondary" className="shrink-0">
-                        Save
-                      </Button>
-                    </div>
+                    <Input name="title" defaultValue={mod.title} required className="max-w-xs" />
                     <MediaField
                       name="image"
                       kind="image"
                       label="Module image"
                       defaultValue={mod.image}
                     />
-                  </form>
+                  </SaveForm>
                   <form action={boundDeleteModule.bind(null, mod.id)}>
                     <button
                       type="submit"

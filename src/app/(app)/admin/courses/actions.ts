@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { ActionResult } from "@/lib/action-result";
 
 async function requireAdmin() {
   const session = await auth();
@@ -13,14 +14,18 @@ async function requireAdmin() {
   }
 }
 
+function firstIssue(error: z.ZodError): string {
+  return error.issues[0]?.message ?? "Please check the fields and try again.";
+}
+
 const courseSchema = z.object({
   slug: z
     .string()
-    .min(1)
+    .min(1, "Give the course a slug, e.g. advanced-javascript.")
     .regex(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers, and hyphens only"),
-  title: z.string().min(1),
-  description: z.string().min(1),
-  worldId: z.string().min(1),
+  title: z.string().min(1, "Give the course a title."),
+  description: z.string().min(1, "Add a short course description."),
+  worldId: z.string().min(1, "Pick a world for this course."),
   // Either a pasted URL or an uploaded Blob URL; blank means "no image".
   heroImage: z
     .string()
@@ -53,26 +58,36 @@ export async function createCourse(formData: FormData) {
   redirect(`/admin/courses/${course.id}`);
 }
 
-export async function updateCourseDetails(courseId: string, formData: FormData) {
+export async function updateCourseDetails(
+  courseId: string,
+  formData: FormData
+): Promise<ActionResult> {
   await requireAdmin();
 
-  const parsed = courseSchema.parse({
+  const parsed = courseSchema.safeParse({
     slug: formData.get("slug"),
     title: formData.get("title"),
     description: formData.get("description"),
     worldId: formData.get("worldId"),
     heroImage: formData.get("heroImage"),
   });
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+
   const published = formData.get("published") === "on";
 
-  await prisma.course.update({
-    where: { id: courseId },
-    data: { ...parsed, published },
-  });
+  try {
+    await prisma.course.update({
+      where: { id: courseId },
+      data: { ...parsed.data, published },
+    });
+  } catch {
+    return { ok: false, error: "Couldn't save — that slug is probably taken." };
+  }
 
   revalidatePath(`/admin/courses/${courseId}`);
   revalidatePath("/courses");
   revalidatePath("/");
+  return { ok: true };
 }
 
 export async function deleteCourse(courseId: string) {

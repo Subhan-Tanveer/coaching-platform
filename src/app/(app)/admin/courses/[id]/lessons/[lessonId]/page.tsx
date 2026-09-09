@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Textarea } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { MediaField } from "@/components/admin/media-field";
+import { SaveForm } from "@/components/admin/save-form";
 import { updateLesson } from "../../actions";
 
 export default async function AdminLessonEditPage({
@@ -32,7 +32,13 @@ export default async function AdminLessonEditPage({
 
       <Card className="mt-8 p-2">
         <CardContent>
-          <form action={boundUpdateLesson} className="grid gap-3">
+          <SaveForm
+            action={boundUpdateLesson}
+            className="grid gap-3"
+            label="Save lesson"
+            successMessage="Lesson saved"
+            buttonClassName="w-fit"
+          >
             <div className="grid gap-3 sm:grid-cols-3">
               <Input name="title" defaultValue={lesson.title} required className="sm:col-span-2" />
               <Input
@@ -57,10 +63,7 @@ export default async function AdminLessonEditPage({
               rows={20}
               className="font-mono text-sm"
             />
-            <Button type="submit" className="w-fit">
-              Save lesson
-            </Button>
-          </form>
+          </SaveForm>
         </CardContent>
       </Card>
     </main>
