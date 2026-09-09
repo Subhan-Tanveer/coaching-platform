@@ -31,7 +31,7 @@ export default async function DashboardPage() {
             orderBy: { order: "asc" },
             include: {
               lessons: { orderBy: { order: "asc" } },
-              quiz: { select: { id: true } },
+              quizzes: { orderBy: { order: "asc" }, select: { id: true } },
             },
           },
         },
@@ -41,7 +41,7 @@ export default async function DashboardPage() {
 
   const lessonIds = enrollments.flatMap((e) => e.course.modules.flatMap((m) => m.lessons.map((l) => l.id)));
   const quizIds = enrollments.flatMap((e) =>
-    e.course.modules.map((m) => m.quiz?.id).filter((id): id is string => !!id)
+    e.course.modules.flatMap((m) => m.quizzes.map((q) => q.id))
   );
 
   const [progressRows, quizAttempts] = await Promise.all([
@@ -98,14 +98,16 @@ export default async function DashboardPage() {
                 firstLessonSlug: mod.lessons[0].slug,
                 totalLessons: mod.lessons.length,
                 completedLessons: mod.lessons.filter((l) => completedSet.has(l.id)).length,
-                hasQuiz: !!mod.quiz,
-                quizPassed: mod.quiz
-                  ? passedQuizSet.has(mod.quiz.id)
-                    ? true
-                    : attemptedQuizSet.has(mod.quiz.id)
-                      ? false
-                      : null
-                  : null,
+                hasQuiz: mod.quizzes.length > 0,
+                // Green only once every quiz in the module is passed.
+                quizPassed:
+                  mod.quizzes.length === 0
+                    ? null
+                    : mod.quizzes.every((q) => passedQuizSet.has(q.id))
+                      ? true
+                      : mod.quizzes.some((q) => attemptedQuizSet.has(q.id))
+                        ? false
+                        : null,
               }));
 
             return (

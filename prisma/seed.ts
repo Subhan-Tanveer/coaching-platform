@@ -193,11 +193,14 @@ async function main() {
       }
 
       if (mod.quiz) {
-        const createdQuiz = await prisma.quiz.upsert({
-          where: { moduleId: createdModule.id },
-          update: { title: mod.quiz.title },
-          create: { moduleId: createdModule.id, title: mod.quiz.title },
+        const existingQuiz = await prisma.quiz.findFirst({
+          where: { moduleId: createdModule.id, title: mod.quiz.title },
         });
+        const createdQuiz =
+          existingQuiz ??
+          (await prisma.quiz.create({
+            data: { moduleId: createdModule.id, title: mod.quiz.title, order: 0 },
+          }));
 
         await prisma.question.deleteMany({ where: { quizId: createdQuiz.id } });
         await prisma.question.createMany({

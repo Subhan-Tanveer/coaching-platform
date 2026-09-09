@@ -154,31 +154,57 @@ export async function updateLesson(
 
 export async function createQuiz(courseId: string, moduleId: string, formData: FormData) {
   await requireAdmin();
-  const title = z.string().min(1).parse(formData.get("title"));
-  await prisma.quiz.create({ data: { moduleId, title } });
+
+  const title = z.string().min(1, "Give the quiz a title.").parse(formData.get("title"));
+  const maxOrder = await prisma.quiz.aggregate({ where: { moduleId }, _max: { order: true } });
+
+  const quiz = await prisma.quiz.create({
+    data: { moduleId, title, order: (maxOrder._max.order ?? -1) + 1 },
+  });
+
   revalidatePath(`/admin/courses/${courseId}`);
-  revalidatePath(`/admin/courses/${courseId}/modules/${moduleId}/quiz`);
+  revalidatePath("/learn", "layout");
+  redirect(`/admin/courses/${courseId}/quizzes/${quiz.id}`);
+}
+
+export async function updateQuiz(
+  courseId: string,
+  quizId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = z
+    .object({ title: z.string().min(1, "Give the quiz a title.") })
+    .safeParse({ title: formData.get("title") });
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+
+  await prisma.quiz.update({ where: { id: quizId }, data: parsed.data });
+
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/admin/courses/${courseId}/quizzes/${quizId}`);
+  revalidatePath("/learn", "layout");
+  return { ok: true };
 }
 
 export async function deleteQuiz(courseId: string, quizId: string) {
   await requireAdmin();
   await prisma.quiz.delete({ where: { id: quizId } });
   revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath("/learn", "layout");
 }
 
 const questionSchema = z.object({
-  text: z.string().min(1),
-  optionA: z.string().min(1),
-  optionB: z.string().min(1),
-  optionC: z.string().min(1),
-  optionD: z.string().min(1),
+  text: z.string().min(1, "Write the question."),
+  optionA: z.string().min(1, "Fill in option A."),
+  optionB: z.string().min(1, "Fill in option B."),
+  optionC: z.string().min(1, "Fill in option C."),
+  optionD: z.string().min(1, "Fill in option D."),
   correctOption: z.enum(["A", "B", "C", "D"]),
 });
 
-export async function createQuestion(courseId: string, moduleId: string, quizId: string, formData: FormData) {
-  await requireAdmin();
-
-  const parsed = questionSchema.parse({
+function readQuestion(formData: FormData) {
+  return questionSchema.safeParse({
     text: formData.get("text"),
     optionA: formData.get("optionA"),
     optionB: formData.get("optionB"),
@@ -186,18 +212,49 @@ export async function createQuestion(courseId: string, moduleId: string, quizId:
     optionD: formData.get("optionD"),
     correctOption: formData.get("correctOption"),
   });
+}
+
+export async function createQuestion(
+  courseId: string,
+  quizId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = readQuestion(formData);
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
   const maxOrder = await prisma.question.aggregate({ where: { quizId }, _max: { order: true } });
 
   await prisma.question.create({
-    data: { ...parsed, quizId, order: (maxOrder._max.order ?? -1) + 1 },
+    data: { ...parsed.data, quizId, order: (maxOrder._max.order ?? -1) + 1 },
   });
 
-  revalidatePath(`/admin/courses/${courseId}/modules/${moduleId}/quiz`);
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/admin/courses/${courseId}/quizzes/${quizId}`);
+  return { ok: true };
 }
 
-export async function deleteQuestion(courseId: string, moduleId: string, questionId: string) {
+export async function updateQuestion(
+  courseId: string,
+  quizId: string,
+  questionId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const parsed = readQuestion(formData);
+  if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
+
+  await prisma.question.update({ where: { id: questionId }, data: parsed.data });
+
+  revalidatePath(`/admin/courses/${courseId}/quizzes/${quizId}`);
+  return { ok: true };
+}
+
+export async function deleteQuestion(courseId: string, quizId: string, questionId: string) {
   await requireAdmin();
   await prisma.question.delete({ where: { id: questionId } });
-  revalidatePath(`/admin/courses/${courseId}/modules/${moduleId}/quiz`);
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/admin/courses/${courseId}/quizzes/${quizId}`);
 }

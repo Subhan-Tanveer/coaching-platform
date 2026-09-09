@@ -30,7 +30,10 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
           orderBy: { order: "asc" },
           include: {
             lessons: { orderBy: { order: "asc" } },
-            quiz: { include: { _count: { select: { questions: true } } } },
+            quizzes: {
+              orderBy: { order: "asc" },
+              include: { _count: { select: { questions: true } } },
+            },
           },
         },
       },
@@ -164,6 +167,33 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
                       </form>
                     </li>
                   ))}
+                  {mod.quizzes.map((quiz) => (
+                    <li key={quiz.id} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-[var(--muted-bg)]">
+                      <Link
+                        href={`/admin/courses/${course.id}/quizzes/${quiz.id}`}
+                        className="group flex flex-1 flex-wrap items-center gap-x-2 gap-y-1"
+                        title="Edit this quiz"
+                      >
+                        <ClipboardCheck className="size-3.5 shrink-0 text-[var(--muted)] transition-colors group-hover:text-[var(--primary)]" />
+                        <span className="transition-colors group-hover:text-[var(--primary)]">{quiz.title}</span>
+                        <span className="text-xs text-[var(--muted)]">
+                          {quiz._count.questions} question{quiz._count.questions === 1 ? "" : "s"}
+                        </span>
+                        {quiz._count.questions === 0 && (
+                          <span className="text-xs text-[var(--warning)]">no questions yet</span>
+                        )}
+                      </Link>
+                      <form action={boundDeleteQuiz.bind(null, quiz.id)}>
+                        <button
+                          type="submit"
+                          className="rounded-lg p-1 text-[var(--muted)] hover:bg-[var(--danger-bg)] hover:text-[var(--danger)]"
+                          title="Delete this quiz"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      </form>
+                    </li>
+                  ))}
                 </ul>
                 <form action={boundCreateLesson} className="flex flex-wrap items-center gap-2">
                   <Input name="title" placeholder="Lesson title" required className="max-w-[180px]" />
@@ -183,33 +213,16 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
                 </form>
 
                 <div className="mt-3 border-t border-[var(--border)] pt-3">
-                  {mod.quiz ? (
-                    <div className="flex items-center justify-between">
-                      <Link
-                        href={`/admin/courses/${course.id}/modules/${mod.id}/quiz`}
-                        className="flex items-center gap-2 text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
-                      >
-                        <ClipboardCheck className="size-4" />
-                        {mod.quiz.title} &middot; {mod.quiz._count.questions} questions
-                      </Link>
-                      <form action={boundDeleteQuiz.bind(null, mod.quiz.id)}>
-                        <button
-                          type="submit"
-                          className="rounded-lg p-1 text-[var(--muted)] hover:bg-[var(--danger-bg)] hover:text-[var(--danger)]"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      </form>
-                    </div>
-                  ) : (
-                    <form action={createQuiz.bind(null, course.id, mod.id)} className="flex items-center gap-2">
-                      <Input name="title" placeholder="Checkpoint quiz title" required className="max-w-[220px]" />
-                      <Button type="submit" size="sm" variant="secondary" className="gap-1">
-                        <ClipboardCheck className="size-3.5" />
-                        Add quiz
-                      </Button>
-                    </form>
-                  )}
+                  <form
+                    action={createQuiz.bind(null, course.id, mod.id)}
+                    className="flex flex-wrap items-center gap-2"
+                  >
+                    <Input name="title" placeholder="Quiz title" required className="max-w-[220px]" />
+                    <Button type="submit" size="sm" variant="secondary" className="gap-1">
+                      <ClipboardCheck className="size-3.5" />
+                      Add quiz
+                    </Button>
+                  </form>
                 </div>
               </CardContent>
             </Card>

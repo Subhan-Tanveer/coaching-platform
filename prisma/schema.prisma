@@ -58,7 +58,7 @@ model Module {
   courseId String
   course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   lessons  Lesson[]
-  quiz     Quiz?
+  quizzes  Quiz[]
 }
 
 model Lesson {
@@ -99,13 +99,13 @@ model LessonProgress {
   @@unique([userId, lessonId])
 }
 
-// One quiz per module (checkpoint at the end of that module). Only modules
-// that close out a difficulty tier (basics/intermediate/advanced) have one.
+// A module can carry several checkpoint quizzes, ordered like its lessons.
 model Quiz {
   id        String        @id @default(cuid())
-  moduleId  String        @unique
+  moduleId  String
   module    Module        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   title     String
+  order     Int           @default(0)
   questions Question[]
   attempts  QuizAttempt[]
 }

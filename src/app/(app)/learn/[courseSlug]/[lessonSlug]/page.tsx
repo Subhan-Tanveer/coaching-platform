@@ -27,7 +27,7 @@ export default async function LessonPage({
         orderBy: { order: "asc" },
         include: {
           lessons: { orderBy: { order: "asc" } },
-          quiz: { select: { id: true, title: true } },
+          quizzes: { orderBy: { order: "asc" }, select: { id: true, title: true } },
         },
       },
     },
@@ -51,9 +51,10 @@ export default async function LessonPage({
   const prevLesson = currentIndex > 0 ? allLessons[currentIndex - 1] : null;
   const nextLessonInFlat = currentIndex < allLessons.length - 1 ? allLessons[currentIndex + 1] : null;
 
+  const firstQuizOfModule = currentModule.quizzes[0];
   const nextStep =
-    isLastLessonInModule && currentModule.quiz
-      ? { href: `/learn/${course.slug}/quiz/${currentModule.quiz.id}`, label: currentModule.quiz.title }
+    isLastLessonInModule && firstQuizOfModule
+      ? { href: `/learn/${course.slug}/quiz/${firstQuizOfModule.id}`, label: firstQuizOfModule.title }
       : nextLessonInFlat
         ? { href: `/learn/${course.slug}/${nextLessonInFlat.slug}`, label: nextLessonInFlat.title }
         : null;
@@ -66,7 +67,7 @@ export default async function LessonPage({
     prisma.quizAttempt.findMany({
       where: {
         userId,
-        quizId: { in: course.modules.map((m) => m.quiz?.id).filter((id): id is string => !!id) },
+        quizId: { in: course.modules.flatMap((m) => m.quizzes.map((q) => q.id)) },
       },
       select: { quizId: true, score: true, total: true, passed: true },
     }),
@@ -109,27 +110,27 @@ export default async function LessonPage({
                     </li>
                   );
                 })}
-                {mod.quiz && (
-                  <li>
-                    <Link
-                      href={`/learn/${course.slug}/quiz/${mod.quiz.id}`}
-                      className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
-                    >
-                      <ClipboardCheck
-                        className={cn(
-                          "size-4 shrink-0",
-                          attemptByQuizId.get(mod.quiz.id)?.passed && "text-[var(--success)]"
+                {mod.quizzes.map((quiz) => {
+                  const attempt = attemptByQuizId.get(quiz.id);
+                  return (
+                    <li key={quiz.id}>
+                      <Link
+                        href={`/learn/${course.slug}/quiz/${quiz.id}`}
+                        className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm text-[var(--muted)] transition-colors hover:text-[var(--foreground)]"
+                      >
+                        <ClipboardCheck
+                          className={cn("size-4 shrink-0", attempt?.passed && "text-[var(--success)]")}
+                        />
+                        {quiz.title}
+                        {attempt && (
+                          <span className="ml-auto text-xs">
+                            {attempt.score}/{attempt.total}
+                          </span>
                         )}
-                      />
-                      {mod.quiz.title}
-                      {attemptByQuizId.has(mod.quiz.id) && (
-                        <span className="ml-auto text-xs">
-                          {attemptByQuizId.get(mod.quiz.id)!.score}/{attemptByQuizId.get(mod.quiz.id)!.total}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                )}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

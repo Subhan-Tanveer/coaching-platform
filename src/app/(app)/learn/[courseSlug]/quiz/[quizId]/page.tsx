@@ -20,7 +20,15 @@ export default async function QuizPage({
       module: {
         include: {
           course: {
-            include: { modules: { orderBy: { order: "asc" }, include: { lessons: { orderBy: { order: "asc" } } } } },
+            include: {
+              modules: {
+                orderBy: { order: "asc" },
+                include: {
+                  lessons: { orderBy: { order: "asc" } },
+                  quizzes: { orderBy: { order: "asc" }, select: { id: true, title: true } },
+                },
+              },
+            },
           },
         },
       },
@@ -37,9 +45,15 @@ export default async function QuizPage({
   const moduleIndex = course.modules.findIndex((m) => m.id === quiz.module.id);
   const currentModule = course.modules[moduleIndex];
   const nextModule = course.modules[moduleIndex + 1];
-  const continueHref = nextModule?.lessons[0]
-    ? `/learn/${course.slug}/${nextModule.lessons[0].slug}`
-    : "/dashboard";
+
+  // A module can hold several quizzes, so finish this module's before moving on.
+  const quizIndex = currentModule.quizzes.findIndex((q) => q.id === quiz.id);
+  const nextQuizOfModule = currentModule.quizzes[quizIndex + 1];
+  const continueHref = nextQuizOfModule
+    ? `/learn/${course.slug}/quiz/${nextQuizOfModule.id}`
+    : nextModule?.lessons[0]
+      ? `/learn/${course.slug}/${nextModule.lessons[0].slug}`
+      : "/dashboard";
 
   const lastLessonOfModule = currentModule.lessons[currentModule.lessons.length - 1];
 
