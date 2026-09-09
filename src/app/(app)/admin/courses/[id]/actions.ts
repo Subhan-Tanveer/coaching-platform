@@ -6,6 +6,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/action-result";
+import { newLessonContent } from "@/lib/lesson-content";
 
 function firstIssue(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Please check the fields and try again.";
@@ -90,7 +91,7 @@ export async function createLesson(courseId: string, moduleId: string, formData:
       ...parsed,
       moduleId,
       order: (maxOrder._max.order ?? -1) + 1,
-      content: `# ${parsed.title}\n\nStart writing this lesson's content here.`,
+      content: newLessonContent(parsed.title),
     },
   });
 

@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Trash2, Plus, ClipboardCheck } from "lucide-react";
+import { Trash2, Plus, ClipboardCheck, Pencil, Video } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { isUnwritten } from "@/lib/lesson-content";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -132,10 +133,26 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
                 </div>
                 <ul className="mb-3 flex flex-col gap-1">
                   {mod.lessons.map((lesson) => (
-                    <li key={lesson.id} className="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm hover:bg-[var(--muted-bg)]">
-                      <Link href={`/admin/courses/${course.id}/lessons/${lesson.id}`} className="flex-1">
-                        {lesson.title}{" "}
-                        <span className="text-xs text-[var(--muted)]">({lesson.estimatedMinutes}m)</span>
+                    <li key={lesson.id} className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm hover:bg-[var(--muted-bg)]">
+                      <Link
+                        href={`/admin/courses/${course.id}/lessons/${lesson.id}`}
+                        className="group flex flex-1 flex-wrap items-center gap-x-2 gap-y-1"
+                        title="Edit this lesson"
+                      >
+                        <Pencil className="size-3.5 shrink-0 text-[var(--muted)] transition-colors group-hover:text-[var(--primary)]" />
+                        <span className="transition-colors group-hover:text-[var(--primary)]">
+                          {lesson.title}
+                        </span>
+                        <span className="text-xs text-[var(--muted)]">{lesson.estimatedMinutes}m</span>
+                        {lesson.videoUrl && (
+                          <span className="inline-flex items-center gap-1 text-xs text-[var(--success)]">
+                            <Video className="size-3.5" />
+                            video
+                          </span>
+                        )}
+                        {isUnwritten(lesson.content) && (
+                          <span className="text-xs text-[var(--warning)]">not written yet</span>
+                        )}
                       </Link>
                       <form action={boundDeleteLesson.bind(null, lesson.id)}>
                         <button
