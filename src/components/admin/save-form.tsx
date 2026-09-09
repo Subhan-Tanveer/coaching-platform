@@ -44,7 +44,7 @@ export function SaveForm({
   useEffect(() => {
     if (!state || state === reported.current) return;
     reported.current = state;
-    if (state.ok) toast.success(successMessage);
+    if (state.ok) toast.success(state.message ?? successMessage);
     else toast.error(state.error);
   }, [state, successMessage]);
 

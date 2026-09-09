@@ -1,14 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Trash2, Plus, ClipboardCheck, Pencil, Video } from "lucide-react";
+import { Trash2, Plus, ClipboardCheck, Pencil, Video, Eye, EyeOff } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { isUnwritten } from "@/lib/lesson-content";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input, Textarea, Select } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { MediaField } from "@/components/admin/media-field";
 import { SaveForm } from "@/components/admin/save-form";
-import { updateCourseDetails, deleteCourse } from "../actions";
+import { updateCourseDetails, deleteCourse, setCoursePublished } from "../actions";
 import {
   createModule,
   deleteModule,
@@ -57,6 +58,42 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
       <h1 className="mt-2 text-3xl font-bold tracking-tight">{course.title}</h1>
 
       <Card className="mt-8 p-2">
+        <CardContent className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              {course.published ? (
+                <Badge variant="success">
+                  <Eye className="size-3" />
+                  Live
+                </Badge>
+              ) : (
+                <Badge variant="warning">
+                  <EyeOff className="size-3" />
+                  Draft
+                </Badge>
+              )}
+              <span className="text-sm font-medium">
+                {course.published ? "Students can find this course" : "Hidden from students"}
+              </span>
+            </div>
+            <p className="text-xs text-[var(--muted)]">
+              {course.published
+                ? "It shows on the home page, the catalog, and its world."
+                : "Nobody can see or enrol in it until you publish. Anyone already enrolled keeps their access."}
+            </p>
+          </div>
+          <SaveForm
+            action={setCoursePublished.bind(null, course.id)}
+            label={course.published ? "Unpublish" : "Publish course"}
+            size="sm"
+            variant={course.published ? "secondary" : "primary"}
+          >
+            <input type="hidden" name="published" value={course.published ? "false" : "true"} />
+          </SaveForm>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-8 p-2">
         <CardContent>
           <h2 className="mb-4 text-lg font-semibold">Course details</h2>
           <SaveForm
@@ -91,10 +128,6 @@ export default async function AdminCourseEditPage({ params }: { params: Promise<
                 </option>
               ))}
             </Select>
-            <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
-              <input type="checkbox" name="published" defaultChecked={course.published} className="size-4" />
-              Published
-            </label>
           </SaveForm>
         </CardContent>
       </Card>

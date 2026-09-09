@@ -29,7 +29,9 @@ export default async function AdminCoursesPage() {
                 <div>
                   <div className="mb-1 flex items-center gap-2">
                     <p className="font-semibold">{course.title}</p>
-                    {!course.published && <Badge variant="warning">Draft</Badge>}
+                    <Badge variant={course.published ? "success" : "warning"}>
+                      {course.published ? "Live" : "Draft"}
+                    </Badge>
                   </div>
                   <p className="text-xs text-[var(--muted)]">
                     {course.world.name} &middot; {course._count.modules} modules &middot;{" "}

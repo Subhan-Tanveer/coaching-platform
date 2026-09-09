@@ -50,7 +50,9 @@ export async function createCourse(formData: FormData) {
   });
 
   const course = await prisma.course.create({
-    data: { ...parsed, order: (maxOrder._max.order ?? -1) + 1, published: true },
+    // A new course starts as a draft so half-written material never appears
+    // in the catalog; publishing is a deliberate, separate step.
+    data: { ...parsed, order: (maxOrder._max.order ?? -1) + 1, published: false },
   });
 
   revalidatePath("/admin/courses");
@@ -73,12 +75,10 @@ export async function updateCourseDetails(
   });
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
 
-  const published = formData.get("published") === "on";
-
   try {
     await prisma.course.update({
       where: { id: courseId },
-      data: { ...parsed.data, published },
+      data: parsed.data,
     });
   } catch {
     return { ok: false, error: "Couldn't save — that slug is probably taken." };
@@ -96,4 +96,36 @@ export async function deleteCourse(courseId: string) {
   revalidatePath("/admin/courses");
   revalidatePath("/courses");
   redirect("/admin/courses");
+}
+
+export async function setCoursePublished(
+  courseId: string,
+  formData: FormData
+): Promise<ActionResult> {
+  await requireAdmin();
+
+  const published = formData.get("published") === "true";
+
+  if (published) {
+    // Publishing an empty shell is never what the admin means, and students
+    // would land on a course with nothing to open.
+    const lessons = await prisma.lesson.count({ where: { module: { courseId } } });
+    if (lessons === 0) {
+      return { ok: false, error: "Add at least one lesson before publishing this course." };
+    }
+  }
+
+  const course = await prisma.course.update({
+    where: { id: courseId },
+    data: { published },
+    select: { slug: true, worldId: true, world: { select: { slug: true } } },
+  });
+
+  revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath("/admin/courses");
+  revalidatePath("/courses");
+  revalidatePath(`/courses/${course.slug}`);
+  revalidatePath(`/worlds/${course.world.slug}`);
+  revalidatePath("/");
+  return { ok: true, message: published ? "Course published" : "Course unpublished" };
 }
